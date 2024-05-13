@@ -1,15 +1,20 @@
+import nltk
+
+# Pre-download NLTK data
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
 import streamlit as st
 import pandas as pd
-import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
-import nltk
 from nltk.corpus import stopwords
 import re
 
 # Load and prepare data
-@st.cache
+@st.experimental_singleton
 def load_data():
     df = pd.read_csv("reviewHotelJakarta.csv", encoding="latin-1")
     df.drop(columns=['Hotel_name', 'name'], inplace=True)
@@ -21,9 +26,6 @@ df = load_data()
 
 # Tokenization and Lemmatization
 def process_text(text):
-    nltk.download('stopwords')
-    nltk.download('wordnet')
-    nltk.download('omw-1.4')
     stop_words = set(stopwords.words('english'))
     stop_words.remove('not')
     lemmatizer = nltk.stem.WordNetLemmatizer()
@@ -33,7 +35,7 @@ def process_text(text):
     return " ".join(lemmatized)
 
 # Model Training
-@st.cache
+@st.experimental_singleton
 def train_model():
     tfidf = TfidfVectorizer(max_df=0.5, min_df=2)
     X = df['cleaned_text'].apply(process_text)
