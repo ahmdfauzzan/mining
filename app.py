@@ -1,3 +1,4 @@
+from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 import nltk
 import streamlit as st
 import pandas as pd
@@ -6,11 +7,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from nltk.corpus import stopwords
 import re
-from nltk.stem import SnowballStemmer
 
 # Pre-download NLTK data
 nltk.download('stopwords')
-nltk.download('punkt')
 
 # Load and prepare data
 @st.experimental_singleton
@@ -18,17 +17,17 @@ def load_data():
     df = pd.read_csv("gabungan-semua.csv", encoding="latin-1")
     df.drop(columns=['Name', 'Date'], inplace=True)
     df['cleaned_text'] = df['Review'].apply(lambda x: re.sub('[^a-zA-Z\s]', ' ', x).lower().strip())
-    df['Rating'] = pd.to_numeric(df['Rating'], errors='coerce')
     df['label'] = df['Rating'].apply(lambda x: 1 if x > 3 else 0)
     return df
 
 df = load_data()
 
-# Tokenization and Stemming
+# Tokenization and Stemming using Sastrawi
 def process_text(text):
     stop_words = set(stopwords.words('indonesian'))
-    stemmer = SnowballStemmer("indonesian")
-    
+    factory = StemmerFactory()
+    stemmer = factory.create_stemmer()
+
     words = nltk.word_tokenize(text)
     stemmed = [stemmer.stem(word) for word in words if word not in stop_words and len(word) > 1]
     return " ".join(stemmed)
