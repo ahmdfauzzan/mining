@@ -1,5 +1,10 @@
-from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 import nltk
+
+# Pre-download NLTK data
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
 import streamlit as st
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -8,35 +13,26 @@ from sklearn.svm import SVC
 from nltk.corpus import stopwords
 import re
 
-# Pre-download NLTK data
-nltk.download('stopwords')
-
 # Load and prepare data
 @st.experimental_singleton
 def load_data():
-    df = pd.read_csv("gabungan-semua.csv", encoding="latin-1")
-    df.drop(columns=['Name', 'Date'], inplace=True)
-    df['cleaned_text'] = df['Review'].apply(lambda x: re.sub('[^a-zA-Z\s]', ' ', x).lower().strip())
-    
-    # Konversi kolom 'Rating' menjadi numerik
-    df['Rating'] = pd.to_numeric(df['Rating'], errors='coerce')
-    
-    # Membuat kolom 'label' dengan mengasumsikan bahwa 'NaN' di 'Rating' akan menghasilkan nilai False
-    df['label'] = df['Rating'].apply(lambda x: 1 if x > 3 else 0)
-    
+    df = pd.read_csv("reviewHotelJakarta.csv", encoding="latin-1")
+    df.drop(columns=['Hotel_name', 'name'], inplace=True)
+    df['cleaned_text'] = df['review'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x).lower())
+    df['label'] = df['rating'].map({1.0: 0, 2.0: 0, 3.0: 0, 4.0: 1, 5.0: 1})
     return df
 
 df = load_data()
 
-# Tokenization and Stemming using Sastrawi
+# Tokenization and Lemmatization
 def process_text(text):
-    stop_words = set(stopwords.words('indonesian'))
-    factory = StemmerFactory()
-    stemmer = factory.create_stemmer()
+    stop_words = set(stopwords.words('english'))
+    stop_words.remove('not')
+    lemmatizer = nltk.stem.WordNetLemmatizer()
 
-    words = nltk.word_tokenize(text)
-    stemmed = [stemmer.stem(word) for word in words if word not in stop_words and len(word) > 1]
-    return " ".join(stemmed)
+    words = text.split()
+    lemmatized = [lemmatizer.lemmatize(word) for word in words if word not in stop_words]
+    return " ".join(lemmatized)
 
 # Model Training
 @st.experimental_singleton
@@ -54,16 +50,16 @@ def train_model():
 tfidf, model = train_model()
 
 # Streamlit Interface
-st.title("Analisis Sentimen Ulasan Hotel")
+st.title("Hotel Review Sentiment Analysis")
 
-review_input = st.text_area("Tulis ulasan:")
+review_input = st.text_area("Write a review:")
 
-if st.button("Prediksi Sentimen"):
+if st.button("Predict Sentiment"):
     if review_input:
         processed_input = process_text(review_input)
         input_vect = tfidf.transform([processed_input])
         prediction = model.predict(input_vect)
-        result = "Positif" if prediction[0] == 1 else "Negatif"
-        st.success(f"Sentimen yang diprediksi adalah: {result}")
+        result = "Positive" if prediction[0] == 1 else "Negative"
+        st.success(f"The predicted sentiment is: {result}")
     else:
-        st.error("Silakan masukkan ulasan untuk diprediksi.")
+        st.error("Please enter a review to predict.")
