@@ -11,11 +11,9 @@ from nltk.tokenize import RegexpTokenizer
 import nltk
 nltk.download('stopwords')
 from nltk.corpus import stopwords
-from imblearn.over_sampling import SMOTE
-
 
 # Load and prepare data
-@st.cache(allow_output_mutation=True)
+@st.cache_data  # Updated cache function
 def load_data():
     df = pd.read_csv("gabungan-semua.csv", encoding="latin-1")
     df['Rating'] = df['Rating'].apply(lambda x: x.replace(',', '').replace('/5', '').strip()).astype(float).astype(int)
@@ -30,8 +28,8 @@ df['sentiment'] = df['Rating'].apply(lambda rating: 1 if rating > 3 else -1)
 # Clean and tokenize text
 def clean_text(text):
     text = text.lower()
-    text = re.sub('https\S+|@\S+|#\S+|\'\w+|[^\w\s]|', '', text)
-    text = re.sub('\s(2)\s', ' ', text)
+    text = re.sub(r'https\S+|@\S+|#\S+|\'\w+|[^\w\s]|', '', text)  # Improved regex
+    text = re.sub(r'\s2\s', ' ', text)
     tokenizer = RegexpTokenizer('\w+')
     tokens = tokenizer.tokenize(text)
     return tokens
