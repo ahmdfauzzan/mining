@@ -17,7 +17,13 @@ def load_data():
     df = pd.read_csv("gabungan-semua.csv", encoding="latin-1")
     df.drop(columns=['Name', 'Date'], inplace=True)
     df['cleaned_text'] = df['Review'].apply(lambda x: re.sub('[^a-zA-Z\s]', ' ', x).lower().strip())
+    
+    # Konversi kolom 'Rating' menjadi numerik
+    df['Rating'] = pd.to_numeric(df['Rating'], errors='coerce')
+    
+    # Membuat kolom 'label' dengan mengasumsikan bahwa 'NaN' di 'Rating' akan menghasilkan nilai False
     df['label'] = df['Rating'].apply(lambda x: 1 if x > 3 else 0)
+    
     return df
 
 df = load_data()
