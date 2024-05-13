@@ -6,32 +6,31 @@ from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from nltk.corpus import stopwords
 import re
+from nltk.stem import SnowballStemmer
 
 # Pre-download NLTK data
 nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('omw-1.4')
+nltk.download('punkt')
 
 # Load and prepare data
 @st.experimental_singleton
 def load_data():
     df = pd.read_csv("gabungan-semua.csv", encoding="latin-1")
     df.drop(columns=['Name', 'Date'], inplace=True)
-    df['cleaned_text'] = df['Review'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x).lower())
-    df['label'] = df['Rating'].map({1.0: 0, 2.0: 0, 3.0: 0, 4.0: 1, 5.0: 1})
+    df['cleaned_text'] = df['Review'].apply(lambda x: re.sub('[^a-zA-Z\s]', ' ', x).lower().strip())
+    df['label'] = df['Rating'].apply(lambda x: 1 if x > 3 else 0)
     return df
 
 df = load_data()
 
-# Tokenization and Lemmatization
+# Tokenization and Stemming
 def process_text(text):
     stop_words = set(stopwords.words('indonesian'))
-    stop_words.remove('tidak')  # Menghapus "tidak" dari daftar stop words
-    lemmatizer = nltk.stem.WordNetLemmatizer()
-
-    words = text.split()
-    lemmatized = [lemmatizer.lemmatize(word) for word in words if word not in stop_words]
-    return " ".join(lemmatized)
+    stemmer = SnowballStemmer("indonesian")
+    
+    words = nltk.word_tokenize(text)
+    stemmed = [stemmer.stem(word) for word in words if word not in stop_words and len(word) > 1]
+    return " ".join(stemmed)
 
 # Model Training
 @st.experimental_singleton
