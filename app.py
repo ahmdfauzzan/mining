@@ -1,10 +1,4 @@
 import nltk
-
-# Pre-download NLTK data
-nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('omw-1.4')
-
 import streamlit as st
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -13,10 +7,15 @@ from sklearn.svm import SVC
 from nltk.corpus import stopwords
 import re
 
+# Pre-download NLTK data
+nltk.download('stopwords')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
 # Load and prepare data
 @st.experimental_singleton
 def load_data():
-    df = pd.read_csv("reviewHotelJakarta.csv", encoding="latin-1")
+    df = pd.read_csv("gabungan-semua.csv", encoding="latin-1")
     df.drop(columns=['Hotel_name', 'name'], inplace=True)
     df['cleaned_text'] = df['review'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x).lower())
     df['label'] = df['rating'].map({1.0: 0, 2.0: 0, 3.0: 0, 4.0: 1, 5.0: 1})
@@ -26,8 +25,8 @@ df = load_data()
 
 # Tokenization and Lemmatization
 def process_text(text):
-    stop_words = set(stopwords.words('english'))
-    stop_words.remove('not')
+    stop_words = set(stopwords.words('indonesian'))
+    stop_words.remove('tidak')  # Menghapus "tidak" dari daftar stop words
     lemmatizer = nltk.stem.WordNetLemmatizer()
 
     words = text.split()
@@ -50,16 +49,16 @@ def train_model():
 tfidf, model = train_model()
 
 # Streamlit Interface
-st.title("Hotel Review Sentiment Analysis")
+st.title("Analisis Sentimen Ulasan Hotel")
 
-review_input = st.text_area("Write a review:")
+review_input = st.text_area("Tulis ulasan:")
 
-if st.button("Predict Sentiment"):
+if st.button("Prediksi Sentimen"):
     if review_input:
         processed_input = process_text(review_input)
         input_vect = tfidf.transform([processed_input])
         prediction = model.predict(input_vect)
-        result = "Positive" if prediction[0] == 1 else "Negative"
-        st.success(f"The predicted sentiment is: {result}")
+        result = "Positif" if prediction[0] == 1 else "Negatif"
+        st.success(f"Sentimen yang diprediksi adalah: {result}")
     else:
-        st.error("Please enter a review to predict.")
+        st.error("Silakan masukkan ulasan untuk diprediksi.")
