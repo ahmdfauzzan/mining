@@ -16,9 +16,9 @@ nltk.download('omw-1.4')
 @st.experimental_singleton
 def load_data():
     df = pd.read_csv("gabungan-semua.csv", encoding="latin-1")
-    df.drop(columns=['Hotel_name', 'name'], inplace=True)
-    df['cleaned_text'] = df['review'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x).lower())
-    df['label'] = df['rating'].map({1.0: 0, 2.0: 0, 3.0: 0, 4.0: 1, 5.0: 1})
+    df.drop(columns=['Name', 'Date'], inplace=True)
+    df['cleaned_text'] = df['Review'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x).lower())
+    df['label'] = df['Rating'].map({1.0: 0, 2.0: 0, 3.0: 0, 4.0: 1, 5.0: 1})
     return df
 
 df = load_data()
