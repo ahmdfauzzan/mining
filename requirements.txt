@@ -5,3 +5,4 @@ scikit_learn
 pip==24.0
 nltk
 Sastrawi
+imblearn

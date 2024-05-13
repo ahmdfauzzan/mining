@@ -1,65 +1,81 @@
-import nltk
-
-# Pre-download NLTK data
-nltk.download('stopwords')
-nltk.download('wordnet')
-nltk.download('omw-1.4')
-
-import streamlit as st
 import pandas as pd
+import re
+import streamlit as st
+from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import classification_report, confusion_matrix
+from nltk.tokenize import RegexpTokenizer
+import nltk
+nltk.download('stopwords')
 from nltk.corpus import stopwords
-import re
+from imblearn.over_sampling import SMOTE
+
 
 # Load and prepare data
-@st.experimental_singleton
+@st.cache(allow_output_mutation=True)
 def load_data():
-    df = pd.read_csv("reviewHotelJakarta.csv", encoding="latin-1")
-    df.drop(columns=['Hotel_name', 'name'], inplace=True)
-    df['cleaned_text'] = df['review'].apply(lambda x: re.sub('[^a-zA-Z]', ' ', x).lower())
-    df['label'] = df['rating'].map({1.0: 0, 2.0: 0, 3.0: 0, 4.0: 1, 5.0: 1})
+    df = pd.read_csv("gabungan-semua.csv", encoding="latin-1")
+    df['Rating'] = df['Rating'].apply(lambda x: x.replace(',', '').replace('/5', '').strip()).astype(float).astype(int)
+    df.loc[df['Rating'] == 41, 'Rating'] = 4
     return df
 
 df = load_data()
 
-# Tokenization and Lemmatization
-def process_text(text):
-    stop_words = set(stopwords.words('english'))
-    stop_words.remove('not')
-    lemmatizer = nltk.stem.WordNetLemmatizer()
+# Assign sentiment
+df['sentiment'] = df['Rating'].apply(lambda rating: 1 if rating > 3 else -1)
 
-    words = text.split()
-    lemmatized = [lemmatizer.lemmatize(word) for word in words if word not in stop_words]
-    return " ".join(lemmatized)
+# Clean and tokenize text
+def clean_text(text):
+    text = text.lower()
+    text = re.sub('https\S+|@\S+|#\S+|\'\w+|[^\w\s]|', '', text)
+    text = re.sub('\s(2)\s', ' ', text)
+    tokenizer = RegexpTokenizer('\w+')
+    tokens = tokenizer.tokenize(text)
+    return tokens
 
-# Model Training
-@st.experimental_singleton
-def train_model():
-    tfidf = TfidfVectorizer(max_df=0.5, min_df=2)
-    X = df['cleaned_text'].apply(process_text)
-    y = df['label']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
-    X_train_tfidf = tfidf.fit_transform(X_train)
-    
-    model = SVC(kernel='linear', random_state=10)
-    model.fit(X_train_tfidf, y_train)
-    return tfidf, model
+df['content_token'] = df['Review'].apply(clean_text)
 
-tfidf, model = train_model()
+# Remove stopwords and perform stemming
+def remove_stopwords_and_stem(tokens):
+    stopwords_list = nltk.corpus.stopwords.words("indonesian")
+    tokens = [word for word in tokens if word not in stopwords_list]
+    stemmer = StemmerFactory().create_stemmer()
+    stemmed_tokens = [stemmer.stem(token) for token in tokens]
+    return ' '.join(stemmed_tokens)
 
-# Streamlit Interface
-st.title("Hotel Review Sentiment Analysis")
+df['text_processed'] = df['content_token'].apply(remove_stopwords_and_stem)
 
-review_input = st.text_area("Write a review:")
+# Vectorize text
+tfidf = TfidfVectorizer(max_df=0.5, min_df=2)
+X = tfidf.fit_transform(df['text_processed'])
+y = df['sentiment']
 
-if st.button("Predict Sentiment"):
+# Handle imbalanced dataset
+smote = SMOTE()
+X_sm, y_sm = smote.fit_resample(X, y)
+
+# Split the dataset
+X_train, X_test, y_train, y_test = train_test_split(X_sm, y_sm, test_size=0.1, random_state=3)
+
+# Train SVM
+svm = SVC()
+svm.fit(X_train, y_train)
+
+# Streamlit interface
+st.title("Analisis Sentimen Ulasan Hotel")
+
+review_input = st.text_area("Tulis ulasan:")
+
+if st.button("Prediksi Sentimen"):
     if review_input:
-        processed_input = process_text(review_input)
-        input_vect = tfidf.transform([processed_input])
-        prediction = model.predict(input_vect)
-        result = "Positive" if prediction[0] == 1 else "Negative"
-        st.success(f"The predicted sentiment is: {result}")
+        tokens = clean_text(review_input)
+        preprocessed_text = remove_stopwords_and_stem(tokens)
+        input_vect = tfidf.transform([preprocessed_text])
+        prediction = svm.predict(input_vect)
+        result = "Positif" if prediction[0] == 1 else "Negatif"
+        st.success(f"Sentimen yang diprediksi adalah: {result}")
     else:
-        st.error("Please enter a review to predict.")
+        st.error("Silakan masukkan ulasan untuk diprediksi.")
