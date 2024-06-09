@@ -8,4 +8,4 @@ Sastrawi
 imblearn
 joblib
 imbalanced-learn
-sklearn
+scikit-learn
