@@ -10,7 +10,7 @@ from nltk.tokenize import word_tokenize
 nltk.download('punkt')
 nltk.download('stopwords')
 
-stop_words = set(stopwords.words('english'))
+stop_words = set(stopwords.words('indonesian'))
 
 # Memuat data dan model yang telah diproses
 @st.cache(allow_output_mutation=True)
