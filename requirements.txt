@@ -6,3 +6,6 @@ pip==24.0
 nltk
 Sastrawi
 imblearn
+joblib
+imbalanced-learn
+sklearn
