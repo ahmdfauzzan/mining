@@ -72,9 +72,13 @@ df, model_pipeline = load_resources()
 
 # Streamlit interface
 st.title("Analisis Sentimen Ulasan Hotel")
-review_input = st.text_area("Tulis ulasan:")
-if st.button("Prediksi Sentimen") and review_input:
-    prediction = model_pipeline.predict([review_input])[0]
+
+if 'review_input' not in st.session_state:
+    st.session_state['review_input'] = ""
+
+st.session_state['review_input'] = st.text_area("Tulis ulasan:", value=st.session_state['review_input'])
+if st.button("Prediksi Sentimen"):
+    prediction = model_pipeline.predict([st.session_state['review_input']])[0]
     result = "Positif" if prediction == 1 else "Negatif"
     st.success(f"Sentimen yang diprediksi adalah: {result}")
 
