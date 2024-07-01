@@ -6,6 +6,7 @@ from collections import Counter
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from wordcloud import WordCloud
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -58,11 +59,21 @@ def analyze_reviews(uploaded_df):
     most_common_positive = Counter(positive_words).most_common(5)
     most_common_negative = Counter(negative_words).most_common(5)
 
-    st.write("Kata-kata Paling Muncul dalam Sentimen Positif:")
-    st.write([word[0] for word in most_common_positive])
+    # Generate WordClouds
+    positive_wordcloud = WordCloud(background_color='white', width=800, height=500, random_state=21, max_font_size=130).generate(' '.join(positive_words))
+    negative_wordcloud = WordCloud(background_color='white', width=800, height=500, random_state=21, max_font_size=130).generate(' '.join(negative_words))
 
-    st.write("Kata-kata Paling Muncul dalam Sentimen Negatif:")
-    st.write([word[0] for word in most_common_negative])
+    st.write("WordCloud Sentimen Positif:")
+    plt.figure(figsize=(10, 5))
+    plt.imshow(positive_wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    st.pyplot(plt)
+
+    st.write("WordCloud Sentimen Negatif:")
+    plt.figure(figsize=(10, 5))
+    plt.imshow(negative_wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    st.pyplot(plt)
 
     st.write("Hasil Prediksi:")
     st.write(uploaded_df)

@@ -10,3 +10,4 @@ joblib
 imbalanced-learn
 scikit-learn
 matplotlib
+wordcloud
