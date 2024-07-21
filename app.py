@@ -93,7 +93,7 @@ if st.button("Prediksi Sentimen"):
     result = "Positif" if prediction == 1 else "Negatif"
     st.success(f"Sentimen yang diprediksi adalah: {result}")
 
-uploaded_file = st.file_uploader("Unggah file CSV berisi ulasan (Mengandung kolom bernama "Review")", type=["csv"])
+uploaded_file = st.file_uploader("Unggah file CSV berisi ulasan (Mengandung kolom bernama 'Review')", type=["csv"])
 if uploaded_file is not None:
     uploaded_df = pd.read_csv(uploaded_file)
     st.write("Data yang diunggah:")
